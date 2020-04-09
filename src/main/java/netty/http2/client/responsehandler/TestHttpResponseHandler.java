@@ -8,7 +8,7 @@ import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http2.HttpConversionUtil;
 import io.netty.util.CharsetUtil;
-import io.netty.util.internal.PlatformDependent;
+import netty.http2.client.ClientUtil;
 import netty.http2.client.HttpResponseHandler;
 
 import java.util.AbstractMap.SimpleEntry;
@@ -30,7 +30,7 @@ public class TestHttpResponseHandler extends HttpResponseHandler {
     public TestHttpResponseHandler() {
         // Use a concurrent map because we add and iterate from the main thread (just for the purposes of the example),
         // but Netty also does a get on the map when messages are received in a EventLoop thread.
-        streamidPromiseMap = PlatformDependent.newConcurrentHashMap();
+        streamidPromiseMap = ClientUtil.getStreamidPromiseMap();
     }
 
     /**

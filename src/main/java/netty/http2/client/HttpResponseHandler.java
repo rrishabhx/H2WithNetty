@@ -9,7 +9,6 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http2.HttpConversionUtil;
 import io.netty.util.CharsetUtil;
-import io.netty.util.internal.PlatformDependent;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Iterator;
@@ -30,8 +29,7 @@ public class HttpResponseHandler extends SimpleChannelInboundHandler<FullHttpRes
     public HttpResponseHandler() {
         // Use a concurrent map because we add and iterate from the main thread (just for the purposes of the example),
         // but Netty also does a get on the map when messages are received in a EventLoop thread.
-        streamidPromiseMap = PlatformDependent.newConcurrentHashMap();
-        ClientUtil.setStreamidPromiseMap(streamidPromiseMap);
+        streamidPromiseMap = ClientUtil.getStreamidPromiseMap();
     }
 
     /**
@@ -55,6 +53,8 @@ public class HttpResponseHandler extends SimpleChannelInboundHandler<FullHttpRes
      * @see HttpResponseHandler#put(int, io.netty.channel.ChannelFuture, io.netty.channel.ChannelPromise)
      */
     public void awaitResponses(long timeout, TimeUnit unit) {
+        System.out.println("StreamId Map contents: " + streamidPromiseMap.keySet());
+
         Iterator<Entry<Integer, Entry<ChannelFuture, ChannelPromise>>> itr = streamidPromiseMap.entrySet().iterator();
         while (itr.hasNext()) {
             Entry<Integer, Entry<ChannelFuture, ChannelPromise>> entry = itr.next();

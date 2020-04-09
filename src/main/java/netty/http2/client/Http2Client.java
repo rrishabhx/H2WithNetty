@@ -40,7 +40,8 @@ public final class Http2Client {
     private final HttpMethod httpMethod;
     private final int responseTimeout;
     private final HttpResponseHandler responseHandler;
-    private AtomicInteger atomicStreamId;
+    private Channel channel;
+    private AtomicInteger streamId;
 
     public Http2Client(Builder builder) {
         this.httpMethod = builder.httpMethod;
@@ -53,51 +54,51 @@ public final class Http2Client {
         this.sslSupport = builder.sslSupport;
         this.responseTimeout = builder.responseTimeout;
         this.responseHandler = builder.responseHandler;
-        this.atomicStreamId = new AtomicInteger(3);
+        this.channel = null;
+        this.streamId = new AtomicInteger(3);
     }
 
-
-    public void startClient() throws Exception {
+    public void initClient() throws Exception {
         // Configure SSL.
         final SslContext sslCtx = getSslCtx();
 
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         Http2ClientInitializer initializer = new Http2ClientInitializer(sslCtx, Integer.MAX_VALUE, responseHandler);
 
-        try {
-            // Configure the client.
-            Bootstrap b = new Bootstrap();
-            b.group(workerGroup);
-            b.channel(NioSocketChannel.class);
-            b.option(ChannelOption.SO_KEEPALIVE, true);
-            b.remoteAddress(serverIp, serverPort);
-            b.handler(initializer);
+        // Configure the client.
+        Bootstrap b = new Bootstrap();
+        b.group(workerGroup);
+        b.channel(NioSocketChannel.class);
+        b.option(ChannelOption.SO_KEEPALIVE, true);
+        b.remoteAddress(serverIp, serverPort);
+        b.handler(initializer);
 
-            // Start the client.
-            Channel channel = b.connect().syncUninterruptibly().channel();
-            System.out.println("Connected to [" + serverIp + ':' + serverPort + ']');
+        // Start the client.
+        channel = b.connect().syncUninterruptibly().channel();
+        System.out.println("Connected to [" + serverIp + ':' + serverPort + ']');
 
-            // Wait for the HTTP/2 upgrade to occur.
-            Http2SettingsHandler http2SettingsHandler = initializer.settingsHandler();
-            http2SettingsHandler.awaitSettings(responseTimeout, TimeUnit.SECONDS);
-
-            HttpResponseHandler responseHandler = initializer.responseHandler();
-            int streamId;
-            streamId = atomicStreamId.intValue();
+        // Wait for the HTTP/2 upgrade to occur.
+        Http2SettingsHandler http2SettingsHandler = initializer.settingsHandler();
+        http2SettingsHandler.awaitSettings(responseTimeout, TimeUnit.SECONDS);
+    }
 
 
-            FullHttpRequest request = createHttp2Request();
-            responseHandler.put(streamId, channel.write(request), channel.newPromise());
-            channel.flush();
-            responseHandler.awaitResponses(responseTimeout, TimeUnit.SECONDS);
+    public void sendRequest() throws Exception {
+        System.out.println("Sending request with StreamId= " + streamId.get());
 
-            System.out.println("Finished HTTP/2 request(s)");
+        FullHttpRequest request = createHttp2Request();
+        responseHandler.put(streamId.getAndAdd(2), channel.write(request), channel.newPromise());
+        channel.flush();
+        responseHandler.awaitResponses(responseTimeout, TimeUnit.SECONDS);
 
-            // Wait until the connection is closed.
-            channel.close().syncUninterruptibly();
-        } finally {
-            workerGroup.shutdownGracefully();
-        }
+        System.out.println("Finished HTTP/2 request(s)");
+
+        // Wait until the connection is closed.
+//        channel.close().syncUninterruptibly();
+
+//        } finally {
+//            workerGroup.shutdownGracefully();
+//        }
     }
 
     private FullHttpRequest createHttp2Request() {

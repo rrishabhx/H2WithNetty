@@ -7,6 +7,7 @@ import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http2.HttpConversionUtil;
 import io.netty.util.CharsetUtil;
+import io.netty.util.internal.PlatformDependent;
 
 import java.util.Map;
 
@@ -14,6 +15,14 @@ public class ClientUtil {
     private static String serverIp;
     private static int serverPort;
     private static Map<Integer, Map.Entry<ChannelFuture, ChannelPromise>> streamidPromiseMap;
+
+    static {
+        streamidPromiseMap = PlatformDependent.newConcurrentHashMap();
+    }
+
+    public static Map<Integer, Map.Entry<ChannelFuture, ChannelPromise>> getStreamidPromiseMap() {
+        return streamidPromiseMap;
+    }
 
     public static void setStreamidPromiseMap(Map<Integer, Map.Entry<ChannelFuture, ChannelPromise>> streamidPromiseMap) {
         ClientUtil.streamidPromiseMap = streamidPromiseMap;
