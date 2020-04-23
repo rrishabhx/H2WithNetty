@@ -9,6 +9,8 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http2.HttpConversionUtil;
 import io.netty.util.CharsetUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Iterator;
@@ -21,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Process {@link io.netty.handler.codec.http.FullHttpResponse} translated from HTTP/2 frames
  */
 public class HttpResponseHandler extends SimpleChannelInboundHandler<FullHttpResponse> {
-
+    private static final Logger logger = LogManager.getLogger(HttpResponseHandler.class);
     static AtomicLong counter = new AtomicLong();
     static long startTime = System.currentTimeMillis();
     private final Map<Integer, Entry<ChannelFuture, ChannelPromise>> streamidPromiseMap;
@@ -53,7 +55,7 @@ public class HttpResponseHandler extends SimpleChannelInboundHandler<FullHttpRes
      * @see HttpResponseHandler#put(int, io.netty.channel.ChannelFuture, io.netty.channel.ChannelPromise)
      */
     public void awaitResponses(long timeout, TimeUnit unit) {
-        System.out.println("StreamId Map contents: " + streamidPromiseMap.keySet());
+        logger.warn("StreamId Map contents: " + streamidPromiseMap.keySet());
 
         Iterator<Entry<Integer, Entry<ChannelFuture, ChannelPromise>>> itr = streamidPromiseMap.entrySet().iterator();
         while (itr.hasNext()) {
@@ -99,7 +101,7 @@ public class HttpResponseHandler extends SimpleChannelInboundHandler<FullHttpRes
                 String responseContent = new String(arr, 0, contentLength, CharsetUtil.UTF_8);
                 int responseStatusCode = msg.status().code();
 
-                System.out.println("Response status: " + responseStatusCode + "\tContent: " + responseContent);
+                logger.warn("Response status: " + responseStatusCode + "\tContent: " + responseContent);
             }
             entry.getValue().setSuccess();
         }

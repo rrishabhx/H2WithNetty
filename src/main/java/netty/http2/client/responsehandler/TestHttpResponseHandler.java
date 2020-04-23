@@ -10,6 +10,8 @@ import io.netty.handler.codec.http2.HttpConversionUtil;
 import io.netty.util.CharsetUtil;
 import netty.http2.client.ClientUtil;
 import netty.http2.client.HttpResponseHandler;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Iterator;
@@ -22,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Process {@link FullHttpResponse} translated from HTTP/2 frames
  */
 public class TestHttpResponseHandler extends HttpResponseHandler {
-
+    private static final Logger logger = LogManager.getLogger(TestHttpResponseHandler.class);
     static AtomicLong counter = new AtomicLong();
     static long startTime = System.currentTimeMillis();
     private final Map<Integer, Entry<ChannelFuture, ChannelPromise>> streamidPromiseMap;
@@ -98,7 +100,7 @@ public class TestHttpResponseHandler extends HttpResponseHandler {
                 String responseContent = new String(arr, 0, contentLength, CharsetUtil.UTF_8);
                 int responseStatusCode = msg.status().code();
 
-                System.out.println("--(Test Handler)--\nResponse status: " + responseStatusCode + "\nResponse Content: " + responseContent);
+                logger.warn("--(Test Handler)--\nResponse status: " + responseStatusCode + "\nResponse Content: " + responseContent);
             }
             entry.getValue().setSuccess();
         }

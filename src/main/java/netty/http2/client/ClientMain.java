@@ -4,10 +4,14 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpMethod;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 
 public class ClientMain {
+    private static final Logger logger = LogManager.getLogger(ClientMain.class);
+
     public static void main(String[] args) throws Exception {
         Http2Client http2Client = Http2Client.Builder.newInstance()
                 .setServerIp("192.168.0.106")
@@ -16,7 +20,7 @@ public class ClientMain {
                     @Override
                     public void channelRead0(ChannelHandlerContext ctx, FullHttpResponse msg) throws Exception {
                         H2ResponseFromServer responseFromServer = ClientUtil.parseResponseFromServer(ctx, msg);
-                        System.out.println("Anonymous response: " + responseFromServer.getResponseStatus() + "\t"
+                        logger.warn("Anonymous response: " + responseFromServer.getResponseStatus() + "\t"
                                 + responseFromServer.getResponseMsg());
                     }
                 })
@@ -41,7 +45,9 @@ public class ClientMain {
 
 
         http2Client.sendRequest(fullHttpRequest);
-        http2Client.sendRequest(fullHttpRequest);
+//        http2Client.sendRequest(fullHttpRequest);
+
+        http2Client.flushAndAwaitResponses();
 
 
     }

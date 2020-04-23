@@ -2,11 +2,14 @@ package netty.http2.server;
 
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import java.util.HashMap;
 
 public final class ServerUtil {
+    private static final Logger logger = LogManager.getLogger(ServerUtil.class);
     private static HashMap<String, H2ContextHandler> contextHandlerMap;
 
 
@@ -26,7 +29,7 @@ public final class ServerUtil {
             // Getting Params from request
             JSONObject paramsJson = new JSONObject(queryParamsMap);
 
-            System.out.println(("HTTP REQUEST HEADERS/PARAMS: " + new JSONObject() {{
+            logger.warn(("HTTP REQUEST HEADERS/PARAMS: " + new JSONObject() {{
                 put("METHOD", httpMethod.asciiName());
                 put("HEADERS", headersJson);
                 put("PARAMETERS", paramsJson);

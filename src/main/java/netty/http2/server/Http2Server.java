@@ -14,6 +14,8 @@ import io.netty.handler.ssl.ApplicationProtocolConfig.Protocol;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectedListenerFailureBehavior;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectorFailureBehavior;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 
@@ -22,7 +24,7 @@ import java.util.HashMap;
  * server with the example client.
  */
 public final class Http2Server {
-
+    private static final Logger logger = LogManager.getLogger(Http2Server.class);
     private final String ip;
     private final int port;
     private final HashMap<String, H2ContextHandler> contextHandlerHashMap;
@@ -74,7 +76,7 @@ public final class Http2Server {
 
             Channel ch = b.bind(port).sync().channel();
 
-            System.out.println("Open your HTTP/2-enabled web browser and navigate to " +
+            logger.warn("Open your HTTP/2-enabled web browser and navigate to " +
                     (sslSupport ? "https" : "http") + "://" + ip + ":" + port + '/');
 
             ch.closeFuture().sync();

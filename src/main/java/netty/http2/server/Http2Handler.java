@@ -6,6 +6,8 @@ import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http2.*;
 import io.netty.util.CharsetUtil;
 import netty.http2.server.handlers.RootHandler;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,8 +19,8 @@ import static io.netty.buffer.Unpooled.unreleasableBuffer;
  * A simple handler that responds with the message "Hello World!".
  */
 public final class Http2Handler extends Http2ConnectionHandler implements Http2FrameListener {
-
     static final ByteBuf RESPONSE_BYTES = unreleasableBuffer(copiedBuffer("Hello World", CharsetUtil.UTF_8));
+    private static final Logger logger = LogManager.getLogger(Http2Handler.class);
     private String context;
     private FullHttpRequest fullHttpRequest;
     private HttpMethod httpMethod;
@@ -42,7 +44,7 @@ public final class Http2Handler extends Http2ConnectionHandler implements Http2F
 
         fullHttpRequest = request;
 
-        System.out.println("Full URI: " + request.uri() + " Method: " + request.method().asciiName());
+        logger.warn("Full URI: " + request.uri() + " Method: " + request.method().asciiName());
         return http2Headers;
     }
 
@@ -69,8 +71,9 @@ public final class Http2Handler extends Http2ConnectionHandler implements Http2F
 
 
     private void sendResponse(ChannelHandlerContext ctx, int streamId, Http2Headers responseHeaders, ByteBuf payload) {
-        System.out.println("Request URI received= " + context);
+//        logger.warn("Request URI received= " + context);
         // Send a frame for the response status
+        logger.warn("Sending Response to Client --->> " + responseHeaders.status().toString());
         encoder().writeHeaders(ctx, streamId, responseHeaders, 0, false, ctx.newPromise());
         encoder().writeData(ctx, streamId, payload, 0, true, ctx.newPromise());
     }
@@ -99,7 +102,7 @@ public final class Http2Handler extends Http2ConnectionHandler implements Http2F
         httpMethod = new HttpMethod(headers.method().toString());
         context = headers.path().toString().split("\\?")[0];
         queryParamsMap = getQueryParams(headers.path().toString());
-        System.out.println("Http Methods=> " + httpMethod.asciiName() + "\tStreamID=> " + streamId
+        logger.warn("Http Methods=> " + httpMethod.asciiName() + "\tStreamID=> " + streamId
                 + "\tQueryParams=> " + headers.path());
 
         ServerUtil.printAllHttpHeadersAndParams(httpMethod, headersMap, queryParamsMap);
@@ -151,9 +154,9 @@ public final class Http2Handler extends Http2ConnectionHandler implements Http2F
 
     private H2Response assignUriToHandler(String uri, HttpMethod method, FullHttpRequest request, ChannelHandlerContext ctx, HashMap<String, String> headersMap,
                                           HashMap<String, String> queryParamsMap, String content) {
-        System.out.println("+++++++++++++++++++++++++++++");
-        System.out.println("Assigning URI to handler: --> Method: " + method.asciiName() + "\tContent: " + content);
-        System.out.println("+++++++++++++++++++++++++++++");
+//        logger.warn("+++++++++++++++++++++++++++++");
+//        logger.warn("Assigning URI to handler: --> Method: " + method.asciiName() + "\tContent: " + content);
+//        logger.warn("+++++++++++++++++++++++++++++");
 
         H2ContextHandler contextHandler = ServerUtil.getContextHandlerMap().getOrDefault(uri, new RootHandler());
         H2Response h2Response = null;

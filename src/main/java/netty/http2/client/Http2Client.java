@@ -16,6 +16,8 @@ import io.netty.handler.ssl.ApplicationProtocolConfig.Protocol;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectedListenerFailureBehavior;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectorFailureBehavior;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.net.ssl.SSLException;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public final class Http2Client {
 
+    private static final Logger logger = LogManager.getLogger(Http2Client.class);
     private final String serverIp;
     private final int serverPort;
     private final boolean sslSupport;
@@ -59,7 +62,7 @@ public final class Http2Client {
 
         // Start the client.
         channel = b.connect().syncUninterruptibly().channel();
-        System.out.println("Connected to [" + serverIp + ':' + serverPort + ']');
+        logger.warn("Connected to [" + serverIp + ':' + serverPort + ']');
 
         // Wait for the HTTP/2 upgrade to occur.
         Http2SettingsHandler http2SettingsHandler = initializer.settingsHandler();
@@ -71,16 +74,20 @@ public final class Http2Client {
 
     public void sendRequest(FullHttpRequest request) {
         HttpScheme scheme = sslSupport ? HttpScheme.HTTPS : HttpScheme.HTTP;
-        System.out.println("Sending request with StreamId= " + streamId.get());
+        logger.warn("Sending request with StreamId= " + streamId.get());
 
         request.headers().add(HttpHeaderNames.HOST, serverIp + ":" + serverPort);
         request.headers().add(HttpConversionUtil.ExtensionHeaderNames.SCHEME.text(), scheme.name());
 
         responseHandler.put(streamId.getAndAdd(2), channel.write(request), channel.newPromise());
+//        channel.flush();
+//        responseHandler.awaitResponses(responseTimeout, TimeUnit.SECONDS);
+
+    }
+
+    public void flushAndAwaitResponses() {
         channel.flush();
         responseHandler.awaitResponses(responseTimeout, TimeUnit.SECONDS);
-
-        System.out.println("Finished HTTP/2 request(s)");
     }
 
 
